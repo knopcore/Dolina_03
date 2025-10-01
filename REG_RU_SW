@@ -1,0 +1,437 @@
+IF xActivate THEN
+
+(************************************************************)
+(*               ÖÐÏ                                        *)
+(************************************************************)
+
+	TMP:=FALSE;
+	
+(*------------= îáû÷íûå ÿ÷åéêè, âêëþ÷åíèå èìïóëüñîì =---------------*)
+
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà ÐÏ 10*)
+	FOR iCe_MV:=1 TO 20 DO
+		
+		IF (RU10_RP[iCe_MV].COM_ON_AUT <> FALSE) OR (RU10_RP[iCe_MV].COM_ON_TCP <> FALSE) OR (RU10_RP[iCe_MV].COM_ON_MAN <> FALSE) THEN 
+			TMP := TRUE; 
+		END_IF;
+
+		IF (RU10_RP[iCe_MV].COM_OFF_AUT <> FALSE) OR (RU10_RP[iCe_MV].COM_OFF_TCP <> FALSE) OR (RU10_RP[iCe_MV].COM_OFF_MAN <> FALSE) THEN 
+			TMP := TRUE; 
+		END_IF;
+
+	END_FOR; 
+	
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà ÐÏ 04*)
+	FOR iCe_LV:=1 TO 6 DO
+		
+		IF (RU04_RP[iCe_LV].COM_ON_AUT <> FALSE) OR (RU04_RP[iCe_LV].COM_ON_TCP <> FALSE) OR (RU04_RP[iCe_LV].COM_ON_MAN <> FALSE) THEN 
+			TMP := TRUE; 
+		END_IF;
+
+		IF (RU04_RP[iCe_LV].COM_OFF_AUT <> FALSE) OR (RU04_RP[iCe_LV].COM_OFF_TCP <> FALSE) OR (RU04_RP[iCe_LV].COM_OFF_MAN <> FALSE) THEN 
+			TMP := TRUE; 
+		END_IF;
+
+	END_FOR; 
+
+
+
+	(*ïðèøëà êîìàíäà 300ìñåê. ôèêñèðóåì è çàëèïàåì ìàññèâ ñâÿçàííûé ïîòîì ñ ðåëå íà 300ìñåê*)
+	R_TRIG_1(CLK:=TMP);
+    TOF_1(IN:=R_TRIG_1.Q,PT:=TIME#300ms);
+
+		FOR iCe_MV:=1 TO 20 DO
+			(*ïîäàåì êîìàíäó*)
+			IF (RU10_RP[iCe_MV].COM_ON_AUT <> FALSE) OR (RU10_RP[iCe_MV].COM_ON_TCP <> FALSE) OR (RU10_RP[iCe_MV].COM_ON_MAN <> FALSE) THEN 
+				IF (NOT RU10_RP[iCe_MV].ST_BLOCKED ) AND (TOF_1.Q OR RU10_RP[iCe_MV].NEED_SYN) THEN 
+						RU10_RP[iCe_MV].COM_ON 			:= TRUE;
+						RU10_RP[iCe_MV].COM_OFF			:= FALSE;
+						RU10_RP[iCe_MV].ST_SYNINPROGR 	:= TRUE; 
+
+				END_IF;
+			END_IF;
+			
+			(*ñíèìàåì êîìàíäó*)
+			IF  RU10_RP[iCe_MV].NEED_SYN THEN 
+				IF RU10_RP[iCe_MV].ST_ON THEN 
+					RU10_RP[iCe_MV].COM_ON 			:= FALSE;
+					RU10_RP[iCe_MV].ST_SYNINPROGR 	:= FALSE; 
+
+					(*RU10_RP[iCe_MV].COM_ON_AUT	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_TCP	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_MAN	:=	FALSE; *)
+				END_IF;
+			ELSE 
+				IF NOT TOF_1.Q THEN 
+					RU10_RP[iCe_MV].COM_ON 		:= FALSE; 
+
+					(*RU10_RP[iCe_MV].COM_ON_AUT	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_TCP	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_MAN	:=	FALSE;*)
+
+					RU10_RP[iCe_MV].ST_SYNINPROGR 	:= FALSE;
+				END_IF;
+			END_IF;
+			
+			(*ïîäàåì êîìàíäó*)
+			IF (RU10_RP[iCe_MV].COM_OFF_AUT <> FALSE) OR (RU10_RP[iCe_MV].COM_OFF_TCP <> FALSE) OR (RU10_RP[iCe_MV].COM_OFF_MAN <> FALSE) THEN 
+				IF TOF_1.Q THEN 
+					RU10_RP[iCe_MV].COM_ON 			:= FALSE;
+					RU10_RP[iCe_MV].ST_SYNINPROGR 	:= FALSE;	
+					RU10_RP[iCe_MV].COM_OFF 		:= TRUE; 
+					
+				END_IF;
+			END_IF;
+
+			(*ñíèìàåì êîìàíäó*)
+			IF NOT TOF_1.Q THEN 
+				RU10_RP[iCe_MV].COM_OFF 	:= 	FALSE; 
+
+				(*RU10_RP[iCe_MV].COM_OFF_AUT	:=	FALSE;
+				RU10_RP[iCe_MV].COM_OFF_TCP	:=	FALSE;
+				RU10_RP[iCe_MV].COM_OFF_MAN	:=	FALSE; *)
+			END_IF;
+
+			IF RU10_RP[iCe_MV].COM_ON THEN
+					RU10_RP[iCe_MV].COM_ON_AUT	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_TCP	:=	FALSE;
+					RU10_RP[iCe_MV].COM_ON_MAN	:=	FALSE;
+			END_IF;
+
+			IF RU10_RP[iCe_MV].COM_OFF THEN
+					RU10_RP[iCe_MV].COM_OFF_AUT	:=	FALSE;
+					RU10_RP[iCe_MV].COM_OFF_TCP	:=	FALSE;
+					RU10_RP[iCe_MV].COM_OFF_MAN	:=	FALSE; 
+			END_IF;
+
+
+		END_FOR; 
+
+		FOR iCe_LV:=1 TO 6 DO
+			
+			(*ïîäàåì êîìàíäó âêë*)
+			IF (RU04_RP[iCe_LV].COM_ON_AUT <> FALSE) OR (RU04_RP[iCe_LV].COM_ON_TCP <> FALSE) OR (RU04_RP[iCe_LV].COM_ON_MAN <> FALSE) THEN 
+				IF (NOT RU04_RP[iCe_LV].ST_BLOCKED ) AND (TOF_1.Q OR RU04_RP[iCe_LV].NEED_SYN) THEN 
+						RU04_RP[iCe_LV].COM_ON 			:= TRUE; 
+						RU04_RP[iCe_LV].ST_SYNINPROGR 	:= TRUE;
+						RU04_RP[iCe_LV].ST_UNSYNINPROGR := FALSE;
+				END_IF;
+			END_IF;
+
+			(*ïîäàåì êîìàíäó îòêë*)
+			IF (RU04_RP[iCe_LV].COM_OFF_AUT <> FALSE) OR (RU04_RP[iCe_LV].COM_OFF_TCP <> FALSE) 
+			OR (RU04_RP[iCe_LV].COM_OFF_MAN <> FALSE) THEN 
+
+				IF TOF_1.Q THEN
+					IF RU04_RP[iCe_LV].NEED_UNSYN THEN
+						RU04_RP[iCe_LV].ST_UNSYNINPROGR := TRUE;
+						RU04_RP[iCe_LV].ST_SYNINPROGR 	:= FALSE;		
+					ELSE 
+						RU04_RP[iCe_LV].COM_OFF 		:= TRUE;
+					END_IF;
+				END_IF;
+							
+			END_IF;
+			
+			IF (RU04_RP[iCe_LV].ST_UNSYNINPROGR) AND (RU04_RP[iCe_LV].NEED_UNSYN) AND 
+				(ABS(RU04_RP[iCe_LV].PWR_ACT) < RU04_RP[iCe_LV].UNSYN_DELTA) THEN
+					RU04_RP[iCe_LV].COM_OFF := TRUE;
+			END_IF;
+
+			(*ñíèìàåì êîìàíäó âêë*)
+			IF  (RU04_RP[iCe_LV].NEED_SYN) AND RU04_RP[iCe_LV].ST_ON THEN 
+					RU04_RP[iCe_LV].COM_ON 			:= FALSE;
+					RU04_RP[iCe_LV].ST_SYNINPROGR 	:= FALSE; 
+			ELSIF (NOT RU04_RP[iCe_LV].NEED_SYN) AND (NOT TOF_1.Q) THEN
+					RU04_RP[iCe_LV].COM_ON 			:= FALSE; 
+					RU04_RP[iCe_LV].ST_SYNINPROGR 	:= FALSE;
+			END_IF;
+			
+			(*ñíèìàåì êîìàíäó îòêë*)
+			IF  (RU04_RP[iCe_LV].NEED_UNSYN) AND RU04_RP[iCe_LV].ST_OFF THEN 
+					RU04_RP[iCe_LV].COM_OFF			:= FALSE;
+					RU04_RP[iCe_LV].ST_UNSYNINPROGR := FALSE; 
+			ELSIF (NOT TOF_1.Q AND NOT RU04_RP[iCe_LV].NEED_UNSYN) THEN
+					RU04_RP[iCe_LV].COM_OFF			:= FALSE; 
+					RU04_RP[iCe_LV].ST_UNSYNINPROGR := FALSE;
+			END_IF;
+
+			IF	RU04_RP[iCe_LV].COM_ON THEN
+					RU04_RP[iCe_LV].COM_ON_AUT	:=	FALSE;
+					RU04_RP[iCe_LV].COM_ON_TCP	:=	FALSE;
+					RU04_RP[iCe_LV].COM_ON_MAN	:=	FALSE;
+			END_IF;
+
+			IF	RU04_RP[iCe_LV].COM_OFF THEN
+					RU04_RP[iCe_LV].COM_OFF_AUT	:=	FALSE;
+					RU04_RP[iCe_LV].COM_OFF_TCP	:=	FALSE;
+					RU04_RP[iCe_LV].COM_OFF_MAN	:=	FALSE;
+			END_IF;
+
+		END_FOR;  
+
+(************************************************************)
+(*                ÒÏ                                        *)
+(************************************************************)
+
+	TMP3:=FALSE;
+	
+(*------------= îáû÷íûå ÿ÷åéêè, âêëþ÷åíèå èìïóëüñîì =---------------*)
+
+		
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà ÐÏ 04*)
+	FOR iCe_LV:=1 TO 6 DO
+		
+		IF (RU04_TP[iCe_LV].COM_ON_AUT <> FALSE) OR (RU04_TP[iCe_LV].COM_ON_TCP <> FALSE) OR (RU04_TP[iCe_LV].COM_ON_MAN <> FALSE) THEN 
+			TMP3 := TRUE; 
+		END_IF;
+
+		IF (RU04_TP[iCe_LV].COM_OFF_AUT <> FALSE) OR (RU04_TP[iCe_LV].COM_OFF_TCP <> FALSE) OR (RU04_TP[iCe_LV].COM_OFF_MAN <> FALSE) THEN 
+			TMP3 := TRUE; 
+		END_IF;
+
+	END_FOR; 
+
+	(*ïðèøëà êîìàíäà 300ìñåê. ôèêñèðóåì è çàëèïàåì ìàññèâ ñâÿçàííûé ïîòîì ñ ðåëå íà 300ìñåê*)
+	R_TRIG_2(CLK:=TMP3);
+    TOF_2(IN:=R_TRIG_2.Q,PT:=TIME#300ms);
+
+		FOR iCe_LV:=1 TO 6 DO
+		
+			IF  RU04_TP[iCe_LV].NEED_SYN THEN 
+				IF RU04_TP[iCe_LV].ST_ON THEN 
+					RU04_TP[iCe_LV].COM_ON 			:= FALSE;
+					RU04_TP[iCe_LV].ST_SYNINPROGR 	:= FALSE; 
+				END_IF;
+			ELSE 
+				IF NOT TOF_2.Q THEN 
+					RU04_TP[iCe_LV].COM_ON 		:= FALSE; 
+				END_IF;
+			END_IF;
+
+			IF NOT TOF_2.Q THEN 
+				RU04_TP[iCe_LV].COM_OFF 	:= FALSE; 
+			END_IF;			
+		
+			IF (RU04_TP[iCe_LV].COM_ON_AUT <> FALSE) OR (RU04_TP[iCe_LV].COM_ON_TCP <> FALSE) OR (RU04_TP[iCe_LV].COM_ON_MAN <> FALSE) THEN 
+				IF (NOT RU04_TP[iCe_LV].ST_BLOCKED ) AND (TOF_2.Q OR RU04_TP[iCe_LV].NEED_SYN) THEN 
+						RU04_TP[iCe_LV].COM_ON 			:= TRUE; 
+						RU04_TP[iCe_LV].ST_SYNINPROGR 	:= TRUE;
+				END_IF;
+			END_IF;
+
+			IF (RU04_TP[iCe_LV].COM_OFF_AUT <> FALSE) OR (RU04_TP[iCe_LV].COM_OFF_TCP <> FALSE) OR (RU04_TP[iCe_LV].COM_OFF_MAN <> FALSE) THEN 
+				IF TOF_2.Q THEN
+					RU04_TP[iCe_LV].COM_OFF := TRUE; 
+				END_IF;
+			END_IF;
+
+		END_FOR;  
+
+			
+
+(************************************************************)
+(*               Íàãðóçêà è íàãðóçî÷íèê                     *)
+(************************************************************)
+
+
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà íà íàãðóçêó ÎË è áàëëàñò*)
+	FOR iCe_LV:=1 TO 120 DO
+		
+		iC 		:=	iCe_LV;
+
+		IF (LOAD_RP[iC].COM_ON_AUT <> FALSE) OR (LOAD_RP[iC].COM_ON_TCP <> FALSE) OR (LOAD_RP[iC].COM_ON_MAN <> FALSE) THEN 
+			LOAD_RP[iC].COM_ON := TRUE; 
+			LOAD_RP[iC].COM_OFF := FALSE;
+
+			LOAD_RP[iC].COM_ON_AUT	:= FALSE;
+			LOAD_RP[iC].COM_ON_TCP	:= FALSE;
+			LOAD_RP[iC].COM_ON_MAN	:= FALSE;
+
+		END_IF;
+
+		IF (LOAD_RP[iC].COM_OFF_AUT <> FALSE) OR (LOAD_RP[iC].COM_OFF_TCP <> FALSE) OR (LOAD_RP[iC].COM_OFF_MAN <> FALSE) THEN 
+			LOAD_RP[iC].COM_ON := FALSE; 
+			LOAD_RP[iC].COM_OFF := TRUE;
+
+			LOAD_RP[iC].COM_OFF_AUT	:= FALSE;
+			LOAD_RP[iC].COM_OFF_TCP	:= FALSE;
+			LOAD_RP[iC].COM_OFF_MAN	:= FALSE;
+		END_IF;
+
+		IF LOAD_RP[iC].ST_OFF THEN LOAD_RP[iC].COM_OFF := FALSE; END_IF;
+
+		IF EMERGENCY_STOP OR EMERGENCY_STOP_PLC THEN 
+			LOAD_RP[iC].COM_OFF 	:= TRUE; 
+			LOAD_RP[iC].COM_ON 		:= FALSE;
+		END_IF;
+
+		(*Ïåðåíåñåíî â FAST
+		IF ACR_FAST_START AND DOSV_ACR_GO[iC] THEN 
+			LOAD_RP[iC].COM_OFF 	:= TRUE; 
+			LOAD_RP[iC].COM_ON 		:= FALSE;
+		END_IF;
+		*)
+
+	END_FOR;
+
+(************************************************************)
+(*              Êîìàíäû	äîñâåòêè		                    *)
+(************************************************************)
+
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà íà íàãðóçêó ÎË è áàëëàñò*)
+
+
+	FOR iCe_LV:=1 TO 21 DO
+		
+		iC 		:=	iCe_LV;
+		
+		TMP4:=TRUE; (*âñå âêëþ÷åíû*)
+		TMP2:=TRUE; (*âñå îòêëþ÷åíû*)
+
+		PRIVA[iC].ST_OFF 	:= FALSE;
+		PRIVA[iC].ST_ON 	:= FALSE;
+
+		FOR iCe_MV	:=	1 TO 120 DO
+
+			IF (LOAD_RP[iCe_MV].ZONE = PRIVA[iC].ZONE) AND LOAD_RP[iCe_MV].ST_OFF THEN
+				TMP4 := FALSE;
+			END_IF;
+
+			IF (LOAD_RP[iCe_MV].ZONE = PRIVA[iC].ZONE) AND LOAD_RP[iCe_MV].ST_ON THEN
+				TMP2 := FALSE;
+			END_IF;
+
+		END_FOR;
+
+		IF TMP4 AND NOT TMP2 THEN
+			PRIVA[iC].ST_ON := TRUE;
+		END_IF;
+
+		IF TMP2 AND NOT TMP4 THEN
+			PRIVA[iC].ST_OFF := TRUE;
+		END_IF;
+
+		IF (TMP4 AND PRIVA[iC].COM_ON) OR (TMP2 AND PRIVA[iC].COM_OFF) THEN
+			(*IF PRIVA[iC].COM_OFF THEN
+				PRIVA[iC].ST_OFF := TRUE;
+				PRIVA[iC].ST_ON := FALSE;
+			END_IF;
+
+			IF PRIVA[iC].COM_ON THEN
+				PRIVA[iC].ST_OFF := FALSE;
+				PRIVA[iC].ST_ON := TRUE;
+			END_IF; *)
+
+			PRIVA[iC].COM_OFF 	:= FALSE; 
+			PRIVA[iC].COM_ON 	:= FALSE;		
+		END_IF;
+
+		IF PRIVA[iC].COM_STOP OR PRIVA[iC].COM_STOP_TCP THEN 
+			PRIVA[iC].COM_OFF 		:= FALSE;
+			PRIVA[iC].COM_ON 		:= FALSE;
+
+			PRIVA[iC].COM_STOP		:= FALSE;
+			PRIVA[iC].COM_STOP_TCP	:= FALSE;
+		END_IF;
+
+		IF ((*CERTHON_ENABLE AND *)(PRIVA[iC].COM_ON_AUT <> FALSE)) 
+		OR 
+	   ((*NOT CERTHON_ENABLE AND*) ((PRIVA[iC].COM_ON_TCP <> FALSE) OR (PRIVA[iC].COM_ON_MAN <> FALSE))) THEN 
+			PRIVA[iC].COM_OFF 	:= FALSE;
+			PRIVA[iC].COM_ON 	:= TRUE;
+
+			PRIVA[iC].COM_STOP	:= FALSE;
+		END_IF;
+
+		IF ((*CERTHON_ENABLE AND*) (PRIVA[iC].COM_OFF_AUT <> FALSE)) 
+			OR 
+	   ((*NOT CERTHON_ENABLE AND*) ((PRIVA[iC].COM_OFF_TCP <> FALSE) OR (PRIVA[iC].COM_OFF_MAN <> FALSE))) THEN
+			PRIVA[iC].COM_OFF 	:= TRUE; 
+			PRIVA[iC].COM_ON 	:= FALSE;
+
+			PRIVA[iC].COM_STOP	:= FALSE;
+		END_IF;
+
+		(*Ðàñ÷åò ïàóç*)
+		PRIVA[iC].PAUSE 	:= 	FALSE;
+
+		IF PRIVA[iC].COM_OFF THEN 
+			IF NOT ALLOW_TO_LAYDOWN THEN
+				PRIVA[iC].PAUSE 	:= TRUE;
+			END_IF;
+			IF iC > 1  THEN
+				iC2 := iC-1;
+				IF PRIVA[iC2].BUSY_OFF THEN
+					PRIVA[iC].PAUSE 	:= TRUE;
+				END_IF;
+
+			END_IF;
+		END_IF;
+
+		IF PRIVA[iC].COM_ON THEN 
+			IF NOT ALLOW_TO_GROWUP  THEN
+				PRIVA[iC].PAUSE 	:= TRUE;
+			END_IF;
+			IF iC > 1  THEN
+				iC2 := iC-1;
+				IF PRIVA[iC2].BUSY_ON THEN
+					PRIVA[iC].PAUSE 	:= TRUE;
+				END_IF;
+
+			END_IF;
+		END_IF;
+
+
+
+
+
+
+
+	END_FOR;
+
+
+
+(************************************************************)
+(*               Âåíòèëÿöèÿ ÒÏ                     *)
+(************************************************************)
+
+
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà íà íàãðóçêó ÎË è áàëëàñò*)
+	FOR iCe_LV:=1 TO 10 DO
+		
+		iC 		:=	iCe_LV;
+
+		IF (TRANS_COND[iC].COM_ON_AUT <> FALSE) OR (TRANS_COND[iC].COM_ON_TCP <> FALSE) OR (TRANS_COND[iC].COM_ON_MAN <> FALSE) THEN 
+			TRANS_COND[iC].COM_ON := TRUE; 
+			TRANS_COND[iC].COM_OFF := FALSE;
+
+			TRANS_COND[iC].COM_ON_AUT	:= FALSE;
+			TRANS_COND[iC].COM_ON_TCP	:= FALSE;
+			TRANS_COND[iC].COM_ON_MAN	:= FALSE;
+
+		END_IF;
+
+		IF (TRANS_COND[iC].COM_OFF_AUT <> FALSE) OR (TRANS_COND[iC].COM_OFF_TCP <> FALSE) OR (TRANS_COND[iC].COM_OFF_MAN <> FALSE) THEN 
+			TRANS_COND[iC].COM_ON := FALSE; 
+			TRANS_COND[iC].COM_OFF := TRUE;
+
+			TRANS_COND[iC].COM_OFF_AUT	:= FALSE;
+			TRANS_COND[iC].COM_OFF_TCP	:= FALSE;
+			TRANS_COND[iC].COM_OFF_MAN	:= FALSE;
+		END_IF;
+
+		IF TRANS_COND[iC].ST_OFF THEN TRANS_COND[iC].COM_OFF := FALSE; END_IF;
+
+
+	END_FOR;
+
+
+
+	xActive := TRUE;
+
+ELSE
+
+	xActive := FALSE;
+
+END_IF;
