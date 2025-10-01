@@ -1,0 +1,642 @@
+IF xActivate THEN
+
+(************************************************************)
+(*               îøèáêè                                     *)
+(************************************************************)
+
+	RESET_ALARM_COM	:=	RESET_ALARM_COM_MAN OR RESET_ALARM_COM_AUT OR RESET_ALARM_COM_TCP;
+
+	R_TRIG_ALARM(CLK:=RESET_ALARM_COM);
+	TOF_ALARM(IN:=R_TRIG_ALARM.Q,PT:= TIME#1s);
+	RESET_ALARM_REL	:=TOF_ALARM.Q;
+
+    R_TRIG_1(CLK:=MAN_SYN_GEN);
+	TOF_1(IN:=R_TRIG_1.Q,PT:= TIME#1s);
+
+    F_TRIG_1(CLK:=MAN_SYN_GEN);
+	TOF_2(IN:=F_TRIG_1.Q,PT:= TIME#1s);
+
+(************************************************************)
+(*               Çàùèòû è áëîêèðîâêè                        *)
+(************************************************************)	
+
+	IF PROT_RU_AVR_1 THEN
+		IF RU04_RP[2].ST_ON THEN 
+			RU04_RP[2].COM_OFF_AUT :=	TRUE;
+			RU04_RP[2].COM_ON_AUT :=	FALSE;
+		ELSE
+			RU04_RP[2].COM_OFF_AUT :=	FALSE;
+			RU04_RP[2].COM_ON_AUT :=	FALSE;
+		END_IF;
+
+		IF G04[1].COM_ON AND RU04_RP[2].ST_OFF THEN 
+			G04[1].COM_OFF_AUT :=	TRUE;
+			G04[1].COM_ON_AUT :=	FALSE;
+		ELSE
+			G04[1].COM_OFF_AUT :=	FALSE;
+			G04[1].COM_ON_AUT :=	FALSE;
+		END_IF;
+
+	END_IF;
+
+	
+(************************************************************)
+(*               ÄÃÓ                                        *)
+(************************************************************)
+
+	(*ïðîâåðÿåì, ïðèøëà ëè êîìàíäà G 04*)
+	FOR iCe_G:=1 TO 4 DO
+		
+		IF (G04[iCe_G].COM_ON_AUT <> FALSE) OR (G04[iCe_G].COM_ON_TCP <> FALSE) OR (G04[iCe_G].COM_ON_MAN <> FALSE) THEN 
+			G04[iCe_G].COM_ON 		:= TRUE;
+			G04[iCe_G].COM_ON_AUT	:= FALSE;
+			G04[iCe_G].COM_ON_TCP	:= FALSE;
+			G04[iCe_G].COM_ON_MAN	:= FALSE;
+		END_IF;
+
+		IF (G04[iCe_G].COM_OFF_AUT <> FALSE) OR (G04[iCe_G].COM_OFF_TCP <> FALSE) OR (G04[iCe_G].COM_OFF_MAN <> FALSE) THEN 
+			G04[iCe_G].COM_ON 		:= FALSE;
+			G04[iCe_G].COM_OFF_AUT	:= FALSE;
+			G04[iCe_G].COM_OFF_TCP	:= FALSE;
+			G04[iCe_G].COM_OFF_MAN	:= FALSE;
+		END_IF;
+
+		IF G04[iCe_G].COM_ON THEN 
+			G04[iCe_G].COM_ON_REL := TRUE; 
+ 		ELSE
+			G04[iCe_G].COM_ON_REL := FALSE;	
+		END_IF;
+
+	END_FOR;
+
+	G04[1].COM_RESET 				:= RESET_ALARM_REL;
+
+(************************************************************)
+(*               ÃÏÓ                                        *)
+(************************************************************)
+	(*Ñáðîñ àâàðè, åñëè îíà áûëà*)
+	IF RESET_ALARM_COM	THEN
+		G10[1].ST_EMERG_STOP 	:=	FALSE;
+		G10[2].ST_EMERG_STOP 	:=	FALSE;
+		G10[3].ST_EMERG_STOP 	:=	FALSE;
+		G10[4].ST_EMERG_STOP 	:=	FALSE;
+	END_IF;
+
+	(*ïðîâåðÿåì G 10*)
+	FOR iCe_G:=1 TO 4 DO
+		
+		(*Ñèãíàë Çàïóñêà*)		
+		IF (G10[iCe_G].COM_ON_AUT <> FALSE) OR (G10[iCe_G].COM_ON_TCP <> FALSE) OR (G10[iCe_G].COM_ON_MAN <> FALSE) THEN 
+			G10[iCe_G].COM_ON 		:= TRUE; 
+			G10[iCe_G].COM_ON_AUT	:= FALSE;
+			G10[iCe_G].COM_ON_TCP	:= FALSE;
+			G10[iCe_G].COM_ON_MAN	:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].COM_OFF_AUT <> FALSE) OR (G10[iCe_G].COM_OFF_TCP <> FALSE) OR (G10[iCe_G].COM_OFF_MAN <> FALSE) THEN 
+			G10[iCe_G].COM_ON 		:= FALSE; 
+
+			G10[iCe_G].COM_OFF_AUT	:= FALSE;
+			G10[iCe_G].COM_OFF_TCP	:= FALSE;
+			G10[iCe_G].COM_OFF_MAN	:= FALSE;
+		END_IF;
+
+		(*Ñèãíàë Áàéïàñ*)		
+		IF (G10[iCe_G].COM_BYP_ON_AUT <> FALSE) OR (G10[iCe_G].COM_BYP_ON_TCP <> FALSE) OR (G10[iCe_G].COM_BYP_ON_MAN <> FALSE) THEN 
+			G10[iCe_G].COM_BYPASS 		:= TRUE; 
+			G10[iCe_G].COM_BYP_ON_AUT	:= FALSE;
+			G10[iCe_G].COM_BYP_ON_TCP	:= FALSE;
+			G10[iCe_G].COM_BYP_ON_MAN	:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].COM_BYP_OFF_AUT <> FALSE) OR (G10[iCe_G].COM_BYP_OFF_TCP <> FALSE) OR (G10[iCe_G].COM_BYP_OFF_MAN <> FALSE) THEN 
+			G10[iCe_G].COM_BYPASS 		:= FALSE; 
+
+			G10[iCe_G].COM_BYP_OFF_AUT	:= FALSE;
+			G10[iCe_G].COM_BYP_OFF_TCP	:= FALSE;
+			G10[iCe_G].COM_BYP_OFF_MAN	:= FALSE;
+		END_IF;
+
+		(*Ñèãíàë áåçîïàñíîñòè âåðõíåãî óðîâíÿ*)
+		IF NOT EMERGENCY_STOP AND NOT EMERGENCY_STOP_PLC THEN 
+			G10[iCe_G].COM_EXT_READY := TRUE; 
+		ELSE
+			G10[iCe_G].COM_EXT_READY := FALSE;
+			G10[iCe_G].COM_ON 		 := FALSE; 
+			G10[iCe_G].COM_ON_AUT 	 := FALSE;
+			G10[iCe_G].COM_ON_TCP 	 := FALSE;
+			G10[iCe_G].COM_ON_MAN	 := FALSE;
+
+		END_IF;
+
+		(*Îáðàáîòêà ðåæèìà îñòðîâ-ïàðàëëåëü*)
+		G10[iCe_G].MODE_PARALLEL 		:= G10[iCe_G].COM_EXT_MCB; 
+		G10[iCe_G].MODE_ISLAND 			:= NOT G10[iCe_G].COM_EXT_MCB;	
+
+		(*ÂÐÅÌÅÍÍÎ*) 
+		G10[iCe_G].COM_ISLAND_ENABLE	:= TRUE;
+		IF INIT_MODE THEN
+			G10[iCe_G].COM_BYPASS		:= TRUE;
+		END_IF;
+
+		(*Îáðàáîòêà ÷åòûðåõ ñèãíàëîâ*)
+		G10[iCe_G].COM_Fm				:=	G10[iCe_G].COM_Fm_Man OR G10[iCe_G].COM_Fm_Rem OR G10[iCe_G].COM_Fm_Shr OR G10[iCe_G].COM_Fm_Syn;
+		G10[iCe_G].COM_Fp				:=	G10[iCe_G].COM_Fp_Man OR G10[iCe_G].COM_Fp_Rem OR G10[iCe_G].COM_Fp_Shr OR G10[iCe_G].COM_Fp_Syn;
+
+		G10[iCe_G].COM_Vm				:=	G10[iCe_G].COM_Vm_Man OR G10[iCe_G].COM_Vm_Rem OR G10[iCe_G].COM_Vm_Shr OR G10[iCe_G].COM_Vm_Syn;
+		G10[iCe_G].COM_Vp				:=	G10[iCe_G].COM_Vp_Man OR G10[iCe_G].COM_Vp_Rem OR G10[iCe_G].COM_Vp_Shr OR G10[iCe_G].COM_Vp_Syn;
+
+		(*Îáðàáîòêà äîï ñèãíàëîâ*)
+		G10[iCe_G].MODE_HEATING	:=	FALSE;
+		IF (iCe_G < 3) AND (G10[iCe_G].WRD[7] < WORD#650) AND G10[iCe_G].COM_ON THEN
+		 	G10[iCe_G].MODE_HEATING	:=	TRUE;
+		END_IF;
+		IF (iCe_G = 3) AND (G10[iCe_G].WRD[63] < WORD#650) AND G10[iCe_G].COM_ON THEN
+		 	G10[iCe_G].MODE_HEATING	:=	TRUE;
+		END_IF;
+
+		(*G4 CHECK!*)
+		IF (iCe_G = 4) AND NOT TEMP_HEATING (*G10[iCe_G].WRD[63] < WORD#650*) AND G10[iCe_G].COM_ON THEN
+		 	G10[iCe_G].MODE_HEATING	:=	TRUE;
+		END_IF;
+
+		(*Îáðàáîòêà ñèãíàëà çàïóñêà ÃÏÓ*)
+
+		IF G10[iCe_G].COM_ON THEN 
+			G10[iCe_G].COM_ON_REL := TRUE; 
+ 
+		END_IF;
+
+		IF NOT G10[iCe_G].COM_ON THEN 
+			(*îñîáåííîñòü - åñëè îäíà ìàøèíà â îñòðîâå, îíà íå îòêëþ÷èòñÿ*)
+			IF (G10[iCe_G].MODE_ISLAND AND (G10[iCe_G].PWR_ACT_P < 8)) OR G10[iCe_G].MODE_PARALLEL THEN
+				G10[iCe_G].COM_ON_REL 	:= FALSE; 
+			END_IF;
+ 
+		END_IF;
+		
+		(*Ðàñ÷åò êîñèíóñà ÃÏÓ*)
+		IF G10[iCe_G].PWR_COM <> 0 THEN
+			G10[iCe_G].COS_f			:= 		TRUNC_INT((INT_TO_REAL(G10[iCe_G].PWR_ACT)/INT_TO_REAL(G10[iCe_G].PWR_COM))*REAL#100.0);
+		ELSE
+			G10[iCe_G].COS_f			:=		100;
+		END_IF;
+
+
+		
+		(*SYN CHECK! begin*)	
+
+		(*Îáðàáîòêà ñèãíàëà Ðó÷íîãî óïðàâëåíèÿ ìîùíîñòüþ*)
+		IF (G10[iCe_G].COM_MANUAL_OPER_ON_TCP <> FALSE) THEN 
+			G10[iCe_G].MODE_MANUAL_OPER_PROG		:= TRUE; 
+			G10[iCe_G].COM_MANUAL_OPER_ON_TCP		:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].COM_MANUAL_OPER_OFF_TCP <> FALSE) THEN 
+			G10[iCe_G].MODE_MANUAL_OPER_PROG		:= FALSE; 
+			G10[iCe_G].COM_MANUAL_OPER_OFF_TCP		:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].MODE_MANUAL_OPER_PROG ) AND (MAN_SYN_GEN) AND NOT (G10[iCe_G].MODE_MANUAL_OPER_COM) AND TOF_1.Q THEN 
+			G10[iCe_G].MODE_MANUAL_OPER_COM		:= TRUE; 
+		END_IF;
+
+		IF NOT (G10[iCe_G].MODE_MANUAL_OPER_PROG ) OR ((G10[iCe_G].MODE_MANUAL_OPER_COM) AND (TOF_2.Q)) THEN 
+			G10[iCe_G].MODE_MANUAL_OPER_COM		:= FALSE; 
+			G10[iCe_G].MODE_MANUAL_OPER_PROG	:= FALSE; 
+		END_IF;
+
+		(*Îáðàáîòêà ñèãíàëà DISABLE*)
+		IF (G10[iCe_G].COM_DISABLE_ON_TCP <> FALSE) THEN 
+			G10[iCe_G].MODE_DISABLE_PROG		:= TRUE; 
+			G10[iCe_G].COM_DISABLE_ON_TCP		:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].COM_DISABLE_OFF_TCP <> FALSE) THEN 
+			G10[iCe_G].MODE_DISABLE_PROG		:= FALSE; 
+			G10[iCe_G].COM_DISABLE_OFF_TCP		:= FALSE;
+		END_IF;
+
+		IF (G10[iCe_G].MODE_DISABLE_PROG ) THEN 
+			G10[iCe_G].MODE_DISABLE_COM		:= TRUE; 
+		END_IF;
+
+		IF NOT (G10[iCe_G].MODE_DISABLE_PROG ) THEN 
+			G10[iCe_G].MODE_DISABLE_COM		:= FALSE; 
+		END_IF;
+
+
+		(*SYN CHECK! end*)
+
+	END_FOR;
+
+
+
+	(*Îáðàáîòêà ñèãíàëà âêëþ÷åíèÿ ÿ÷åéêè*)
+			
+	IF G10[1].ST_NOM_SPD AND G10[1].COM_ON THEN 
+		G10[1].COM_GCB_ENABLED	:= TRUE;
+	ELSIF (G10[1].MODE_ISLAND AND NOT G10[1].COM_ON AND (G10[1].PWR_ACT_P < 8)) OR G10[1].MODE_PARALLEL THEN 
+		G10[1].COM_GCB_ENABLED	:= FALSE;
+	END_IF;
+
+	IF G10[2].ST_NOM_SPD AND G10[2].COM_ON AND (G10[1].ST_NOM_SPD = G10[1].ST_GCB_ON) THEN 
+		G10[2].COM_GCB_ENABLED	:= TRUE;
+	ELSIF (G10[2].MODE_ISLAND AND NOT G10[2].COM_ON AND (G10[2].PWR_ACT_P < 8)) OR G10[2].MODE_PARALLEL THEN 
+		G10[2].COM_GCB_ENABLED	:= FALSE;
+	END_IF;
+
+	IF G10[3].ST_NOM_SPD AND G10[3].COM_ON AND (G10[1].ST_NOM_SPD = G10[1].ST_GCB_ON) AND (G10[2].ST_NOM_SPD = G10[2].ST_GCB_ON)THEN 
+		G10[3].COM_GCB_ENABLED	:= TRUE;
+	ELSIF (G10[3].MODE_ISLAND AND NOT G10[3].COM_ON AND (G10[3].PWR_ACT_P < 8)) OR G10[3].MODE_PARALLEL THEN 
+		G10[3].COM_GCB_ENABLED	:= FALSE;
+	END_IF;
+
+	IF G10[4].ST_NOM_SPD AND G10[4].COM_ON THEN 
+		G10[4].COM_GCB_ENABLED	:= TRUE;
+	ELSIF (G10[4].MODE_ISLAND AND NOT G10[4].COM_ON AND (G10[4].PWR_ACT_P < 8)) OR G10[4].MODE_PARALLEL THEN 
+		G10[4].COM_GCB_ENABLED	:= FALSE;
+	END_IF;
+
+	(*IF NOT RU04_RP[3].ST_GEN_OFF THEN
+		G10[3].COM_MCB_ENABLED	:= TRUE;
+	ELSE
+		G10[3].COM_MCB_ENABLED	:= FALSE;
+	END_IF;
+
+	IF G10[3].ST_GCB_OFF THEN 
+		RU04_RP[3].ST_GEN_OFF 	:= FALSE;
+	END_IF;*)
+
+
+
+	(*Îáðàáîòêà àâàðèéíîãî ñòîïà ïåðåíåñåíà â FAST
+
+	R_TRIG_1(CLK:=G10[1].ST_GCB_OFF);
+	R_TRIG_2(CLK:=G10[2].ST_GCB_OFF);
+	R_TRIG_3(CLK:=G10[3].ST_GCB_OFF);
+
+	TOF_1(IN:=R_TRIG_1.Q,PT:=TIME#100ms);
+	TOF_2(IN:=R_TRIG_2.Q,PT:=TIME#100ms);
+	TOF_3(IN:=R_TRIG_3.Q,PT:=TIME#100ms);
+
+	(*IF (NOT EMERGENCY_STOP AND NOT EMERGENCY_STOP_PLC) AND G10[1].ST_ALARM (*AND G10[1].ST_NOM_SPD*)(* AND TOF_1.Q THEN 
+		G10[1].ST_EMERG_STOP 	:=	TRUE;
+		IF G10[1].COM_ON THEN G10[1].COM_OFF_AUT	:=	TRUE; END_IF;
+	END_IF;
+
+	(*IF (NOT EMERGENCY_STOP AND NOT EMERGENCY_STOP_PLC) AND G10[2].ST_ALARM (*AND G10[2].ST_NOM_SPD*)(* AND TOF_2.Q THEN 
+		G10[2].ST_EMERG_STOP 	:=	TRUE;
+		IF G10[2].COM_ON THEN G10[2].COM_OFF_AUT	:=	TRUE; END_IF;
+	END_IF;
+
+	IF (NOT EMERGENCY_STOP AND NOT EMERGENCY_STOP_PLC) AND G10[3].ST_ALARM (*AND G10[3].ST_NOM_SPD*)(* AND TOF_3.Q THEN 
+		G10[3].ST_EMERG_STOP 	:=	TRUE;
+		IF G10[3].COM_ON THEN G10[3].COM_OFF_AUT	:=	TRUE; END_IF;
+	END_IF;*)
+
+(************************************************************)
+(*               Ãðóïïû ìîùíîñòè ÃÏÓ                        *)
+(************************************************************)
+
+	G10[1].PWR_GROUP 		:=	INT#1;
+	G10[2].PWR_GROUP 		:=	INT#1;
+	G10[4].PWR_GROUP 		:=	INT#1;(*G4 CHECK!*)
+
+	IF RU10_RP[6].ST_OFF OR RU10_RP[5].ST_OFF OR RU04_RP[3].ST_OFF THEN
+		G10[3].PWR_GROUP 	:=	INT#2;
+	ELSE
+		G10[3].PWR_GROUP 	:=	INT#1;
+	END_IF;
+
+	(*Äåôîëòíîå çíà÷åíèå ìàñòåðà*)
+	G10[1].MODE_MASTER	:= G10[1].ST_GCB_ON;
+	G10[2].MODE_MASTER	:= G10[2].ST_GCB_ON;
+	G10[3].MODE_MASTER	:= G10[3].ST_GCB_ON;
+	G10[4].MODE_MASTER	:= G10[4].ST_GCB_ON;	(*G4 CHECK!*)
+
+	(*Ìåíÿåì çíà÷åíèå ìàñòåðà åñëè ìàøèíà îñòàíàâëèâàåòñÿ èëè êîãäà îíè íà îäíîé øèíå*)
+
+	IF NOT G10[1].COM_ON THEN
+		G10[1].MODE_MASTER		:= FALSE;
+	END_IF;
+
+	IF NOT G10[2].COM_ON THEN
+		G10[2].MODE_MASTER		:= FALSE;
+	END_IF;
+
+	(*G4 CHECK! begin*)
+	IF NOT G10[4].COM_ON THEN
+		G10[4].MODE_MASTER		:= FALSE; 
+	END_IF;
+	(*G4 CHECK! end*)
+	
+	IF G10[1].MODE_MASTER AND G10[2].MODE_MASTER THEN
+		IF G10[1].MODE_HEATING AND G10[2].MODE_HEATING THEN
+			G10[2].MODE_MASTER			:= FALSE;
+		ELSE
+			IF G10[1].MODE_HEATING THEN
+				G10[1].MODE_MASTER		:= FALSE; 
+			ELSE 
+				G10[2].MODE_MASTER		:= FALSE;
+			END_IF;
+		END_IF;
+	END_IF;
+
+	(*G4 CHECK! begin*)
+	IF G10[1].MODE_MASTER AND G10[4].MODE_MASTER THEN
+		IF G10[1].MODE_HEATING AND G10[4].MODE_HEATING THEN
+			G10[4].MODE_MASTER			:= FALSE;
+		ELSE
+			IF G10[1].MODE_HEATING THEN
+				G10[1].MODE_MASTER		:= FALSE; 
+			ELSE 
+				G10[4].MODE_MASTER		:= FALSE;
+			END_IF;
+		END_IF;
+	END_IF;
+	IF G10[4].MODE_MASTER AND G10[2].MODE_MASTER THEN
+		IF G10[4].MODE_HEATING AND G10[2].MODE_HEATING THEN
+			G10[2].MODE_MASTER			:= FALSE;
+		ELSE
+			IF G10[4].MODE_HEATING THEN
+				G10[4].MODE_MASTER		:= FALSE; 
+			ELSE 
+				G10[2].MODE_MASTER		:= FALSE;
+			END_IF;
+		END_IF;
+	END_IF;
+	(*G4 CHECK! end*)
+	
+	IF RU10_RP[6].ST_ON AND RU10_RP[5].ST_ON AND RU04_RP[3].ST_ON THEN 
+	
+		IF G10[1].MODE_MASTER AND G10[3].MODE_MASTER THEN
+			IF G10[1].MODE_HEATING AND G10[3].MODE_HEATING THEN
+				G10[3].MODE_MASTER			:= FALSE;
+			ELSE
+				IF G10[1].MODE_HEATING THEN
+					G10[1].MODE_MASTER		:= FALSE; 
+				ELSE 
+					G10[3].MODE_MASTER		:= FALSE;
+				END_IF;
+			END_IF;
+		END_IF;
+
+		IF G10[2].MODE_MASTER AND G10[3].MODE_MASTER THEN
+			IF G10[2].MODE_HEATING AND G10[3].MODE_HEATING THEN
+				G10[3].MODE_MASTER			:= FALSE;
+			ELSE
+				IF G10[2].MODE_HEATING THEN
+					G10[2].MODE_MASTER		:= FALSE; 
+				ELSE 
+					G10[3].MODE_MASTER		:= FALSE;
+				END_IF;
+			END_IF;
+		END_IF;
+
+		(*G4 CHECK! begin*)
+		IF G10[4].MODE_MASTER AND G10[3].MODE_MASTER THEN
+			IF G10[4].MODE_HEATING AND G10[3].MODE_HEATING THEN
+				G10[3].MODE_MASTER			:= FALSE;
+			ELSE
+				IF G10[4].MODE_HEATING THEN
+					G10[4].MODE_MASTER		:= FALSE; 
+				ELSE 
+					G10[3].MODE_MASTER		:= FALSE;
+				END_IF;
+			END_IF;
+		END_IF;
+		(*G4 CHECK! end*)
+
+	END_IF;
+
+(************************************************************)
+(*               Êîððåêòèðîâêà ìîùíîñòè ÃÏÓ                 *)
+(************************************************************)
+	IF RU04_RP[3].ST_UNSYNINPROGR AND POWER_DELTA12 = INT#0 THEN
+		POWER_DELTA12			:=	TRUNC_INT(INT_TO_REAL(RU04_RP[3].PWR_ACT)*REAL#1.1);
+	END_IF;
+
+	IF NOT RU04_RP[3].ST_UNSYNINPROGR THEN
+		POWER_DELTA12			:=	INT#0;
+	END_IF;
+
+		G10[3].PWR_DELTA 		:=	POWER_DELTA12;
+		G10[2].PWR_DELTA 		:=	-TRUNC_INT(INT_TO_REAL(POWER_DELTA12)*REAL#0.34);
+		G10[1].PWR_DELTA 		:=	-TRUNC_INT(INT_TO_REAL(POWER_DELTA12)*REAL#0.66);
+		G10[4].PWR_DELTA 		:=	-TRUNC_INT(INT_TO_REAL(POWER_DELTA12)*REAL#0.66); (*G4 CHECK! *)
+
+(************************************************************)
+(*               Ðàñ÷åò ìîùíîñòè ÃÏÓ                        *)
+(************************************************************)
+	
+	POWER_AUTO_GENTOT 			:=	INT#0;
+	REACT_AUTO_GENTOT			:=	INT#0;
+	POPRAVKA_NA_NAGRUZ 			:= 	INT#0;
+	POWER_GENTOT_NOM_ACT		:= 	INT#0;
+	POWER_GENTOT_NOM_REACT		:= 	INT#0;
+	POWER_AUTO_LOADTOT_ONGEN	:= 	INT#0;
+	GPU_POWER_SETP_GROUP1 		:= 	INT#0;
+	GPU_POWER_SETP_GROUP2 		:= 	INT#0;
+	TMP_G						:=	INT#1;
+	
+
+	
+	FOR iCe_L:=1 TO 3 DO  (*èäåì ïî ãðóïïàì ìîùíîñòè/ #1 G1-2-4 #2 G3 åñëè îíà èçîëèðîâàíà*)
+		
+	(*ÀÊÒ. Ðàñ÷åò ìîùíîñòè ãåíåðàöèè â ãðóïïå*)	
+	(*ÐÅÀÊÒ. Ðàñ÷åò ìîùíîñòè ãåíåðàöèè â ãðóïïå*)
+
+		FOR iCe_G:=1 TO 4 DO (*G4 CHECK! 3/4*)
+			IF (G10[iCe_G].ST_GCB_ON AND NOT G10[iCe_G].MODE_DISABLE_COM) AND (G10[iCe_G].PWR_GROUP = iCe_L) THEN
+				TMP_G					:=	iCe_G;
+				POWER_AUTO_GENTOT		:=	POWER_AUTO_GENTOT + G10[iCe_G].PWR_ACT;
+				REACT_AUTO_GENTOT		:=	REACT_AUTO_GENTOT + G10[iCe_G].PWR_REACT;
+				
+				(*Êîððåêòèðîâêà ìîùíîñòè, åcëè àãðåãàò îòêëþ÷àåòñÿ èëè ãðååòñÿ*)
+				IF G10[iCe_G].COM_ON AND NOT G10[iCe_G].MODE_HEATING THEN
+					POWER_GENTOT_NOM_ACT	:=	POWER_GENTOT_NOM_ACT  + G10[iCe_G].PWR_NOM;
+				END_IF;
+
+				(*Ðåàêòèâíàÿ ìîùíîñòü*)
+				POWER_GENTOT_NOM_REACT	:=	POWER_GENTOT_NOM_REACT  + G10[iCe_G].PWR_NOM;
+				
+			END_IF;
+
+		END_FOR;
+
+
+
+
+	(*Äîáàâëåíèå ìîùíîñòè ñåòè â ãðóïïå, åëè ðåæèì ïàðàëëåëè*)
+		IF G10[TMP_G].MODE_PARALLEL THEN 
+			POWER_AUTO_LOADTOT 			:=	POWER_AUTO_GENTOT 	+ RU10_RP[1].PWR_ACT;
+			POWER_AUTO_LOADTOT_ONGEN	:=	POWER_AUTO_LOADTOT 	- POPRAVKA_NA_NAGRUZ	- POWER_GRID_KW_SETP;
+		ELSE
+			POWER_AUTO_LOADTOT 			:=	POWER_AUTO_GENTOT;	
+			POWER_AUTO_LOADTOT_ONGEN	:=	POWER_AUTO_LOADTOT;
+		END_IF;
+	
+	(*Èíôîðìàöèîííûå ïåðåìåííûå*)
+		IF iCe_L = 1 THEN GPU_POWER_SETP_GROUP1 := POWER_AUTO_LOADTOT_ONGEN; END_IF;
+		IF iCe_L = 2 AND G10[TMP_G].PWR_GROUP = 2 THEN GPU_POWER_SETP_GROUP2 := POWER_AUTO_LOADTOT_ONGEN; END_IF;
+
+
+		FOR iCe_G:=1 TO 4 DO (*G4 CHECK! 3/4*)
+			(*Ðàñ÷åò àêòèâíîé ìîùíîñòè*)
+
+		    
+
+			
+			IF G10[iCe_G].MODE_HEATING THEN
+
+
+				(*Åñëè èäåò ïðîãðåâ*)
+				IF G10[iCe_G].ST_GCB_ON AND (G10[iCe_G].PWR_GROUP = iCe_L) THEN
+		
+						(*Êîððåêòèðóåì óñòàâêó, åëè ìàøèíà îòêëþ÷àåòñÿ*)
+						IF NOT G10[iCe_G].COM_ON THEN  
+							GPU_POWER_SETP_N	:= INT#0; 
+						ELSE
+							GPU_POWER_SETP_N 	:=	INT#100; 
+						END_IF;
+				
+						G10[iCe_G].SETP_PWR_ACT		:=	TRUNC_INT((INT_TO_REAL(GPU_POWER_SETP_N) * INT_TO_REAL(G10[iCe_G].PWR_NOM))/REAL#1000.0) + G10[iCe_G].PWR_DELTA;
+						G10[iCe_G].SETP_PWR_ACT_P 	:= 	TRUNC_INT(((INT_TO_REAL(G10[iCe_G].SETP_PWR_ACT) / INT_TO_REAL( G10[iCe_G].PWR_NOM ))*REAL#1000.0));
+
+			    END_IF;
+				
+				
+
+			ELSE
+				(*Åñëè íåò ïðîãðåâà*)				
+
+				(*Ñíà÷àëà ïðîõîä ÷åðåç îãðàíè÷åííûå ìàøèíû G10[iCe_G].PWR_LIMIT < 1000*)
+
+				IF G10[iCe_G].ST_GCB_ON AND (G10[iCe_G].PWR_GROUP = iCe_L)  AND NOT G10[iCe_G].MODE_DISABLE_COM AND (G10[iCe_G].PWR_LIMIT < 1000) THEN
+
+						(*Êîððåêòèðóåì óñòàâêó, åëè ìàøèíà îòêëþ÷àåòñÿ*)
+						IF NOT G10[iCe_G].COM_ON THEN  
+							GPU_POWER_SETP_N	:= INT#0; 
+						ELSE
+					
+							GPU_POWER_SETP_N 	:=	(TRUNC_INT((INT_TO_REAL( POWER_AUTO_LOADTOT_ONGEN) / INT_TO_REAL( POWER_GENTOT_NOM_ACT ))*REAL#1000.0));
+
+							(*Êîððåêòèðóåì óñòàâêó, åëè ìàøèíà ñ îãðàíè÷åíèåì*)
+							(*Êîððåêòèðóåì óñòàâêó, ÷òîáû îíà áûëà îò 0 äî 100 %*)
+							IF (GPU_POWER_SETP_N) > G10[iCe_G].PWR_LIMIT	THEN GPU_POWER_SETP_N := G10[iCe_G].PWR_LIMIT; 	END_IF;
+				        	IF (GPU_POWER_SETP_N) < INT#0	 				THEN GPU_POWER_SETP_N := INT#0; 				END_IF; 
+
+
+						END_IF;
+						
+						G10[iCe_G].SETP_PWR_ACT		:=	TRUNC_INT((INT_TO_REAL(GPU_POWER_SETP_N) * INT_TO_REAL(G10[iCe_G].PWR_NOM))/REAL#1000.0) + G10[iCe_G].PWR_DELTA;
+						G10[iCe_G].SETP_PWR_ACT_P 	:= 	TRUNC_INT(((INT_TO_REAL(G10[iCe_G].SETP_PWR_ACT) / INT_TO_REAL( G10[iCe_G].PWR_NOM ))*REAL#1000.0));
+
+						POWER_AUTO_LOADTOT_ONGEN 	:=	POWER_AUTO_LOADTOT_ONGEN - G10[iCe_G].SETP_PWR_ACT;
+						POWER_GENTOT_NOM_ACT		:=	POWER_GENTOT_NOM_ACT  - G10[iCe_G].PWR_NOM;
+
+			    END_IF;
+
+
+			END_IF;
+
+		END_FOR;
+
+
+		FOR iCe_G:=1 TO 4 DO (*G4 CHECK! 3/4*)
+			(*Ðàñ÷åò àêòèâíîé ìîùíîñòè*)
+
+				(*Ïîñëå - ïðîõîä ÷åðåç îáû÷íûå ìàøèíû G10[iCe_G].PWR_LIMIT = 1000*)
+			
+				IF G10[iCe_G].ST_GCB_ON AND (G10[iCe_G].PWR_GROUP = iCe_L)  AND NOT G10[iCe_G].MODE_DISABLE_COM AND (G10[iCe_G].PWR_LIMIT = 1000) AND NOT G10[iCe_G].MODE_HEATING THEN
+		
+						(*Êîððåêòèðóåì óñòàâêó, åëè ìàøèíà îòêëþ÷àåòñÿ*)
+						IF NOT G10[iCe_G].COM_ON THEN  
+							GPU_POWER_SETP_N	:= INT#0; 
+						ELSE
+							GPU_POWER_SETP_N 	:=	(TRUNC_INT((INT_TO_REAL( POWER_AUTO_LOADTOT_ONGEN) / INT_TO_REAL( POWER_GENTOT_NOM_ACT ))*REAL#1000.0)); 
+						END_IF;
+
+						(*Êîððåêòèðóåì óñòàâêó, ÷òîáû îíà áûëà îò 0 äî 100 %*)
+						IF (GPU_POWER_SETP_N) > INT#1000	THEN GPU_POWER_SETP_N := INT#1000; 		END_IF;
+			        	IF (GPU_POWER_SETP_N) < INT#0	 	THEN GPU_POWER_SETP_N := INT#0; 		END_IF; 
+					
+						G10[iCe_G].SETP_PWR_ACT		:=	TRUNC_INT((INT_TO_REAL(GPU_POWER_SETP_N) * INT_TO_REAL(G10[iCe_G].PWR_NOM))/REAL#1000.0) + G10[iCe_G].PWR_DELTA;
+						G10[iCe_G].SETP_PWR_ACT_P 	:= 	TRUNC_INT(((INT_TO_REAL(G10[iCe_G].SETP_PWR_ACT) / INT_TO_REAL( G10[iCe_G].PWR_NOM ))*REAL#1000.0));
+
+			    END_IF;
+
+
+		END_FOR;
+
+
+
+		(*Ðàñ÷åò ðåàêòèâíîé ìîùíîñòè*)
+		FOR iCe_G:=1 TO 4 DO (*G4 CHECK! 3/4*)
+			
+			IF G10[iCe_G].ST_GCB_ON AND (G10[iCe_G].PWR_GROUP = iCe_L)  THEN
+					GPU_REACT_SETP_N			:=	TRUNC_INT(INT_TO_REAL( REACT_AUTO_GENTOT ) * INT_TO_REAL(G10[iCe_G].PWR_NOM )/INT_TO_REAL( POWER_GENTOT_NOM_REACT ));
+					
+					IF REACT_AUTO_GENTOT > 0 THEN
+						G10[iCe_G].SETP_PWR_REACT	:=	  GPU_REACT_SETP_N;
+					ELSE
+						G10[iCe_G].SETP_PWR_REACT	:=	- GPU_REACT_SETP_N;
+					END_IF;
+					
+		    END_IF;
+
+		END_FOR;
+
+	END_FOR;
+
+
+
+	(*Èíôî, êîãäà âñå îòêëþ÷åíî*)
+	FOR iCe_G:=1 TO 4 DO (*G4 CHECK! 3/4*)
+		IF G10[iCe_G].ST_GCB_OFF THEN
+	
+				GPU_POWER_SETP_N := (TRUNC_INT((INT_TO_REAL( POWER_AUTO_LOADTOT_ONGEN )/INT_TO_REAL(G10[iCe_G].PWR_NOM))*REAL#1000.0)); 
+
+				(*Êîððåêòèðóåì óñòàâêó, ÷òîáû îíà áûëà îò 0 äî 100 %*)
+				IF (GPU_POWER_SETP_N) > INT#1000	THEN GPU_POWER_SETP_N := INT#1000; 		END_IF;
+	        	IF (GPU_POWER_SETP_N) < INT#0	 	THEN GPU_POWER_SETP_N := INT#0; 		END_IF;  
+				     
+				G10[iCe_G].SETP_PWR_ACT_P 	:= GPU_POWER_SETP_N;
+				G10[iCe_G].SETP_PWR_ACT		:=	TRUNC_INT((INT_TO_REAL(G10[iCe_G].SETP_PWR_ACT_P) * INT_TO_REAL(G10[iCe_G].PWR_NOM))/REAL#1000.0);
+
+	    END_IF;
+	END_FOR;
+
+(************************************************************)
+(*               Ïðîèçâîäíûå ìîùíîñòè ÃÏÓ                   *)
+(************************************************************)
+
+
+	TON_1(IN:= xACT_DIFF_CLOCK AND NOT TON_1.Q, PT := T_DIFF_CLOCK);
+	DIFF_CLOCK:=TON_1.Q;
+
+	R_TRIG_5(CLK := DIFF_CLOCK);
+ 	IF R_TRIG_5.Q THEN
+		G1_dPdT	:=	G10[1].PWR_ACT	-	G1_OLD;	
+		G1_OLD 	:= 	G10[1].PWR_ACT;
+
+		G2_dPdT	:=	G10[2].PWR_ACT	-	G2_OLD;	
+		G2_OLD 	:= 	G10[2].PWR_ACT;
+
+		G3_dPdT	:=	G10[3].PWR_ACT	-	G3_OLD;	
+		G3_OLD 	:= 	G10[3].PWR_ACT;
+
+		G4_dPdT	:=	G10[4].PWR_ACT	-	G4_OLD;	
+		G4_OLD 	:= 	G10[4].PWR_ACT;
+	END_IF;
+
+
+
+	xActive := TRUE;
+
+ELSE
+
+	xActive := FALSE;
+
+END_IF;
