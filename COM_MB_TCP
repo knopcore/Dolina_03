@@ -1,0 +1,575 @@
+IF xStart Then
+
+
+	(* Общая диагностика Байты 1 и 2*)
+	udtMODBUS_Server_Data[1].X0		:=		EMERGENCY_STOP;			(*1 - Огурец включен (=1) Огурец заблокирован (=0)*)
+	udtMODBUS_Server_Data[1].X1		:=		GPU_ENABLE;				(*2 - ГПУ Автоматический реж (=1) Ручной. Авт.откл. (=0)*)
+	udtMODBUS_Server_Data[1].X2		:=		CERTHON_ENABLE;			(*3 - Досветка Автоматический реж (=1) Ручной. Авт.откл. (=0)*)
+	udtMODBUS_Server_Data[1].X3		:=		ATS_ENABLE;				(*4 - АВР включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[1].X4		:=		MODE_PARALLEL;			(*5 - Параллельный режим (=1) Островной режим (=0)*)
+	udtMODBUS_Server_Data[1].X5		:=		EXT_POWER;				(*6 - Внешнее питание (=1) На ИБП (=0)*)
+
+	IF udtMODBUS_Server_Data[2] <> WORD#0 THEN
+		RESET_ALARM_COM_TCP				:=		udtMODBUS_Server_Data[2].X2;	(**)
+	ELSE
+		RESET_ALARM_COM_TCP				:=		FALSE;	(**)
+	END_IF;
+
+	(* Битовые команды Байты 11 и 12. Включить 13-14, отключить 15-16*)
+
+	udtMODBUS_Server_Data[11].X2	:=		SETT_AVR_GRID_ENABLE; 	(*3- ДГУ всегда запускается при АВР(=1) не запускается, переход в сеть (=0)*)
+	udtMODBUS_Server_Data[11].X3	:=		SETT_GPU_G3_AVR; 		(*4- G3 запускается при АВР(=1) не запускается, отключен (=0)*)
+	udtMODBUS_Server_Data[11].X4	:=		SETT_GPU_G3_NULL; 		(*5- G3 остается в острове без до светки(=1) не запускается, возврат в сеть (=0)*)
+	udtMODBUS_Server_Data[11].X5	:=		SETT_GPU_AUTO_ONOFF;	(*6 - Программно запуск ГПУ(=1) только ручной (=0)*)
+	udtMODBUS_Server_Data[11].X6	:=		SETT_LOAD_AUTO_ONOFF;	(*7 - Программно запуск досветки(=1) только ручной (=0)*)
+	udtMODBUS_Server_Data[11].X7	:=		SETT_ACR_FAST_ENABLE;	(*8 - АЧР включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X8	:=		SETT_RU_AUTO_ISLAND;	(*9 - Авто уход в остров (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X9	:=		SETT_LOAD_ONLYISLAND;	(*10- Нагрузка тлько в острове (=1) и так и так (=0)*)
+	udtMODBUS_Server_Data[11].X10	:=		SETT_GPU_G1_FIRST;		(*11- ГПУ 1 запускается первой (=1) по расчету (=0)*)
+	udtMODBUS_Server_Data[11].X11	:=		SETT_ACR_SLOW_ENABLE;	(*12- АЧР медленный включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X12	:=		SETT_RU_GRIDPROT_ENABLE;(*13- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X13	:=		SETT_LOAD_ALLOWPRIVA;	(*14- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X14	:=		SETT_GPU_G13_ALLOW;		(*15- Режим Г1+Г3 доступен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[11].X15	:=		SETT_GPU_G3_ALWAYS;		(*16- Г3 постоянно в работе доступен (=1) отключен (=0)*)
+
+	IF udtMODBUS_Server_Data[13].X2 THEN SETT_AVR_GRID_ENABLE 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X3 THEN SETT_GPU_G3_AVR	 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X4 THEN SETT_GPU_G3_NULL 			:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X5 THEN SETT_GPU_AUTO_ONOFF 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X6 THEN SETT_LOAD_AUTO_ONOFF 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X7 THEN SETT_ACR_FAST_ENABLE 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X8 THEN SETT_RU_AUTO_ISLAND 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X9 THEN SETT_LOAD_ONLYISLAND 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X10 THEN SETT_GPU_G1_FIRST 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X11 THEN SETT_ACR_SLOW_ENABLE 		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X12 THEN SETT_RU_GRIDPROT_ENABLE 	:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X13 THEN SETT_LOAD_ALLOWPRIVA		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X14 THEN SETT_GPU_G13_ALLOW		:= TRUE; END_IF;
+	IF udtMODBUS_Server_Data[13].X15 THEN SETT_GPU_G3_ALWAYS		:= TRUE; END_IF;
+
+	IF udtMODBUS_Server_Data[15].X2 THEN SETT_AVR_GRID_ENABLE		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X3 THEN SETT_GPU_G3_AVR 			:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X4 THEN SETT_GPU_G3_NULL 			:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X5 THEN SETT_GPU_AUTO_ONOFF 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X6 THEN SETT_LOAD_AUTO_ONOFF 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X7 THEN SETT_ACR_FAST_ENABLE 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X8 THEN SETT_RU_AUTO_ISLAND 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X9 THEN SETT_LOAD_ONLYISLAND 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X10 THEN SETT_GPU_G1_FIRST 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X11 THEN SETT_ACR_SLOW_ENABLE 		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X12 THEN SETT_RU_GRIDPROT_ENABLE 	:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X13 THEN SETT_LOAD_ALLOWPRIVA		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X14 THEN SETT_GPU_G13_ALLOW		:= FALSE; END_IF;
+	IF udtMODBUS_Server_Data[15].X15 THEN SETT_GPU_G3_ALWAYS		:= FALSE; END_IF;
+
+	(* Битовые значения Байты 18 и 19. *)
+	udtMODBUS_Server_Data[18].X0	:=		ALLOW_TO_GROWUP;		(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X1	:=		ALLOW_TO_LAYDOWN;		(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X4	:=		ALLOW_START_GEN;		(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X5	:=		ALLOW_STOP_GEN;			(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X6	:=		ALLOW_MANAGE_GEN;		(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X9	:=		ACR_FAST_START OR ACR_SLOW_START;(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X10	:=		COM_ALARM;				(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X11	:=		GRID_PROT_START;		(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X12	:=		ACR_FAST_START;			(*0- Защита сети включен (=1) отключен (=0)*)
+	udtMODBUS_Server_Data[18].X13	:=		ACR_SLOW_START;			(*0- Защита сети включен (=1) отключен (=0)*)
+	
+
+
+	(* Байтовые уставки Байты 21 - 40 отображение. 41-60, установка значения*)
+
+	(*Переток*)
+	SEV_VAL_INT_1(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[41],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[21],
+					VAR_MAN		:=	POWER_GRID_KW_SETP_MAN,
+					VAR_NAT		:=	POWER_GRID_KW_SETP);
+	udtMODBUS_Server_Data[41]	:=	SEV_VAL_INT_1.VAR_TCP_IN;
+	udtMODBUS_Server_Data[21]	:=	SEV_VAL_INT_1.VAR_TCP_OUT;
+	POWER_GRID_KW_SETP_MAN		:=	SEV_VAL_INT_1.VAR_MAN;
+	POWER_GRID_KW_SETP			:=	SEV_VAL_INT_1.VAR_NAT;
+
+	(*Максимальная мощнось ГПУ в % 0-1000*)
+	SEV_VAL_INT_2(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[42],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[22],
+					VAR_MAN		:=	SETT_PWR_MAX_GPU_MAN,
+					VAR_NAT		:=	SETT_PWR_MAX_GPU);
+	udtMODBUS_Server_Data[42]	:=	SEV_VAL_INT_2.VAR_TCP_IN;
+	udtMODBUS_Server_Data[22]	:=	SEV_VAL_INT_2.VAR_TCP_OUT;
+	SETT_PWR_MAX_GPU_MAN		:=	SEV_VAL_INT_2.VAR_MAN;
+	SETT_PWR_MAX_GPU			:=	SEV_VAL_INT_2.VAR_NAT;
+
+	(*Номер варианта перехода в остров*)
+	SEV_VAL_INT_3(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[43],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[23],
+					VAR_MAN		:=	SETT_RU_ISLAND_N_MAN,
+					VAR_NAT		:=	SETT_RU_ISLAND_N);
+	udtMODBUS_Server_Data[43]	:=	SEV_VAL_INT_3.VAR_TCP_IN;
+	udtMODBUS_Server_Data[23]	:=	SEV_VAL_INT_3.VAR_TCP_OUT;
+	SETT_RU_ISLAND_N_MAN		:=	SEV_VAL_INT_3.VAR_MAN;
+	SETT_RU_ISLAND_N			:=	SEV_VAL_INT_3.VAR_NAT;
+
+	(*Максимальная мощнось ГПУ в % 0-1000*)
+	SEV_VAL_INT_4(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[44],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[24],
+					VAR_MAN		:=	SETT_PWR_MIN_GPU_MAN,
+					VAR_NAT		:=	SETT_PWR_MIN_GPU);
+	udtMODBUS_Server_Data[44]	:=	SEV_VAL_INT_4.VAR_TCP_IN;
+	udtMODBUS_Server_Data[24]	:=	SEV_VAL_INT_4.VAR_TCP_OUT;
+	SETT_PWR_MIN_GPU_MAN		:=	SEV_VAL_INT_4.VAR_MAN;
+	SETT_PWR_MIN_GPU			:=	SEV_VAL_INT_4.VAR_NAT;
+
+	(*время паузы между супенями нагрузки*)
+
+	(*45*)
+	I_TMP01_MAN	:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPUP_SING_MAN)/DINT#1000);	
+	I_TMP01		:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPUP_SING)/DINT#1000);
+
+	SEV_VAL_INT_5(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[45],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[25],
+					VAR_MAN		:=	I_TMP01_MAN,
+					VAR_NAT		:=	I_TMP01);
+
+	udtMODBUS_Server_Data[45]	:=	SEV_VAL_INT_5.VAR_TCP_IN;
+	udtMODBUS_Server_Data[25]	:=	SEV_VAL_INT_5.VAR_TCP_OUT;
+
+	I_TMP01_MAN	:=	SEV_VAL_INT_5.VAR_MAN;
+	I_TMP01		:=	SEV_VAL_INT_5.VAR_NAT;
+
+	SETT_T_TO_STEPUP_SING_MAN	:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01_MAN)*1000));
+	SETT_T_TO_STEPUP_SING		:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01)*1000));
+	
+	(*46*)
+	I_TMP01_MAN	:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPUP_MUL_MAN)/DINT#1000);	
+	I_TMP01		:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPUP_MUL)/DINT#1000);
+
+	SEV_VAL_INT_6(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[46],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[26],
+					VAR_MAN		:=	I_TMP01_MAN,
+					VAR_NAT		:=	I_TMP01);
+
+	udtMODBUS_Server_Data[46]	:=	SEV_VAL_INT_6.VAR_TCP_IN;
+	udtMODBUS_Server_Data[26]	:=	SEV_VAL_INT_6.VAR_TCP_OUT;
+
+	I_TMP01_MAN	:=	SEV_VAL_INT_6.VAR_MAN;
+	I_TMP01		:=	SEV_VAL_INT_6.VAR_NAT;
+
+	SETT_T_TO_STEPUP_MUL_MAN	:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01_MAN)*1000));
+	SETT_T_TO_STEPUP_MUL		:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01)*1000));
+
+	(*47*)
+	I_TMP01_MAN	:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPDOWN_MAN)/DINT#1000);	
+	I_TMP01		:=	DINT_TO_INT(TIME_TO_DINT(SETT_T_TO_STEPDOWN)/DINT#1000);
+
+	SEV_VAL_INT_7(	VAR_TCP_IN	:=	udtMODBUS_Server_Data[47],
+					VAR_TCP_OUT	:=	udtMODBUS_Server_Data[27],
+					VAR_MAN		:=	I_TMP01_MAN,
+					VAR_NAT		:=	I_TMP01);
+
+	udtMODBUS_Server_Data[47]	:=	SEV_VAL_INT_7.VAR_TCP_IN;
+	udtMODBUS_Server_Data[27]	:=	SEV_VAL_INT_7.VAR_TCP_OUT;
+
+	I_TMP01_MAN	:=	SEV_VAL_INT_7.VAR_MAN;
+	I_TMP01		:=	SEV_VAL_INT_7.VAR_NAT;
+
+	SETT_T_TO_STEPDOWN_MAN	:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01_MAN)*1000));
+	SETT_T_TO_STEPDOWN		:=	DINT_TO_TIME(INT_TO_DINT((I_TMP01)*1000));
+
+	(* Отображение числовых данных 61 - 90 *)
+	udtMODBUS_Server_Data[61]		:=		INT_TO_WORD(POWER_AUTO_GENTOT);			(*Мощность генерации*)
+	udtMODBUS_Server_Data[62]		:=		INT_TO_WORD(POWER_AUTO_LOADTOT);		(*Мощность нагрузки*)
+	udtMODBUS_Server_Data[63]		:=		INT_TO_WORD(POWER_RESERVE_GENTOT);		(*Мощность доступного резерва*)
+	udtMODBUS_Server_Data[64]		:=		INT_TO_WORD(POWER_PROGNOZ_TOTAL_UP);	(*Прогнозируемая общая мощность ВКЛ*)
+	udtMODBUS_Server_Data[65]		:=		INT_TO_WORD(POWER_PROGNOZ_TOTAL_DOWN);	(*Прогнозируемая общая мощность ОТКЛ*)
+	udtMODBUS_Server_Data[70]		:=		INT_TO_WORD(PWR_L3);					(*G3*)
+	udtMODBUS_Server_Data[71]		:=		INT_TO_WORD(PWR_L2);					(*G2*)
+	udtMODBUS_Server_Data[72]		:=		INT_TO_WORD(PWR_L1);					(*G1*)
+	udtMODBUS_Server_Data[73]		:=		INT_TO_WORD(PWR_L13);					(*G13*)
+	udtMODBUS_Server_Data[74]		:=		INT_TO_WORD(PWR_L12);					(*G12*)
+	udtMODBUS_Server_Data[75]		:=		INT_TO_WORD(PWR_L123);					(*G123*)
+
+	udtMODBUS_Server_Data[76]		:=		INT_TO_WORD(PWR_L14);					(*G12*)  (*G4 CHECK!*)
+	udtMODBUS_Server_Data[77]		:=		INT_TO_WORD(PWR_L1234);					(*G123*)
+
+	udtMODBUS_Server_Data[78]		:=		INT_TO_WORD(SETT_PWR_MIN_RES_AUTO);		(*Минимальный резерв ВКЛ досветки*)
+	udtMODBUS_Server_Data[79]		:=		INT_TO_WORD(SETT_PWR_MAX_RES_AUTO);		(*Максимальный резерв ВЫКЛ досветки*)
+	udtMODBUS_Server_Data[80]		:=		INT_TO_WORD(MARKER);					(*Сообщение автомата*)
+	udtMODBUS_Server_Data[81]		:=		INT_TO_WORD(PWR_L13);					(*G13*)
+	udtMODBUS_Server_Data[82]		:=		INT_TO_WORD(PWR_L23);					(*G23*)
+	udtMODBUS_Server_Data[83]		:=		INT_TO_WORD(PWR_ONLD);
+		
+	(* Сигналы ошибок РУ*)
+
+	(* Ячейка 10кв РП *)
+
+	FOR iCe_MV:=1 TO 20 DO
+
+		Num_01		:=		INT#101+iCe_MV*INT#10;  (*111, 121 ...*)
+		Num_02		:=		INT#102+iCe_MV*INT#10;  (*112, 122 ...*)
+		Num_03		:=		INT#103+iCe_MV*INT#10;  (*113, 123 ...*)
+		Num_04		:=		INT#104+iCe_MV*INT#10;  (*114, 124 ...*)
+		Num_05		:=		INT#105+iCe_MV*INT#10;  (*115, 125 ...*)
+		Num_06		:=		INT#106+iCe_MV*INT#10;  (*116, 126 ...*)
+		Num_07		:=		INT#107+iCe_MV*INT#10;  (*117, 127 ...*)
+		Num_08		:=		INT#108+iCe_MV*INT#10;  (*118, 128 ...*)
+		Num_09		:=		INT#109+iCe_MV*INT#10;  (*119, 129 ...*)
+		Num_10		:=		INT#110+iCe_MV*INT#10;  (*120, 130 ...*)
+
+
+		udtMODBUS_Server_Data[Num_01].X0		:=		RU10_RP[iCe_MV].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X1		:=		RU10_RP[iCe_MV].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X2		:=		RU10_RP[iCe_MV].ST_ROLL;
+		udtMODBUS_Server_Data[Num_01].X3		:=		RU10_RP[iCe_MV].ST_GND;
+		udtMODBUS_Server_Data[Num_01].X4		:=		RU10_RP[iCe_MV].ST_ALARM;
+		udtMODBUS_Server_Data[Num_01].X5		:=		RU10_RP[iCe_MV].ST_TELE;
+		udtMODBUS_Server_Data[Num_01].X6		:=		RU10_RP[iCe_MV].ST_MAN;
+		udtMODBUS_Server_Data[Num_01].X7		:=		RU10_RP[iCe_MV].ST_READY;
+		udtMODBUS_Server_Data[Num_01].X8		:=		RU10_RP[iCe_MV].ST_SYNINPROGR;
+		udtMODBUS_Server_Data[Num_01].X9		:=		RU10_RP[iCe_MV].ST_UNSYNINPROGR;
+		udtMODBUS_Server_Data[Num_01].X10		:=		RU10_RP[iCe_MV].ST_VEXT;
+		udtMODBUS_Server_Data[Num_01].X11		:=		RU10_RP[iCe_MV].ST_BLOCKED;
+
+
+
+
+		udtMODBUS_Server_Data[Num_03]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].PWR_ACT);	(* Активная *)
+		udtMODBUS_Server_Data[Num_04]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].PWR_REACT);	(* Реактивная *)
+		udtMODBUS_Server_Data[Num_05]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].PWR_COM);	(* Полная *)
+
+		udtMODBUS_Server_Data[Num_06]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].CURR_A);		(* Ток А *)
+		udtMODBUS_Server_Data[Num_07]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].CURR_B);		(* Ток В *)
+		udtMODBUS_Server_Data[Num_08]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].CURR_C);		(* Ток С *)
+
+		udtMODBUS_Server_Data[Num_09]	 	:= 		INT_TO_WORD(RU10_RP[iCe_MV].PWR_ACT);	(* Косинус *)
+
+		udtMODBUS_Server_Data[Num_10]	 	:= 		RU10_RP[iCe_MV].PROT;					(* Срабатывания защит *)
+
+
+		RU10_RP[iCe_MV].COM_ON_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		RU10_RP[iCe_MV].COM_OFF_TCP 		:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+		
+
+
+	END_FOR;
+
+
+(* Ячейка 04кв РП *)
+
+	FOR iCe_LV:=1 TO 6 DO
+
+		Num_01		:=		INT#301+iCe_LV*INT#10;  (*111, 121 ...*)
+		Num_02		:=		INT#302+iCe_LV*INT#10;  (*112, 122 ...*)
+		Num_03		:=		INT#303+iCe_LV*INT#10;  (*113, 123 ...*)
+		Num_04		:=		INT#304+iCe_LV*INT#10;  (*114, 124 ...*)
+		Num_05		:=		INT#305+iCe_LV*INT#10;  (*115, 125 ...*)
+		Num_06		:=		INT#306+iCe_LV*INT#10;  (*116, 126 ...*)
+		Num_07		:=		INT#307+iCe_LV*INT#10;  (*117, 127 ...*)
+		Num_08		:=		INT#308+iCe_LV*INT#10;  (*118, 128 ...*)
+		Num_09		:=		INT#309+iCe_LV*INT#10;  (*119, 129 ...*)
+		Num_10		:=		INT#310+iCe_LV*INT#10;  (*120, 130 ...*)
+
+
+		udtMODBUS_Server_Data[Num_01].X0		:=		RU04_RP[iCe_LV].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X1		:=		RU04_RP[iCe_LV].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X2		:=		RU04_RP[iCe_LV].ST_ROLL;
+		udtMODBUS_Server_Data[Num_01].X3		:=		RU04_RP[iCe_LV].ST_GND;
+		udtMODBUS_Server_Data[Num_01].X4		:=		RU04_RP[iCe_LV].ST_ALARM;
+		udtMODBUS_Server_Data[Num_01].X5		:=		RU04_RP[iCe_LV].ST_TELE;
+		udtMODBUS_Server_Data[Num_01].X6		:=		RU04_RP[iCe_LV].ST_MAN;
+		udtMODBUS_Server_Data[Num_01].X7		:=		RU04_RP[iCe_LV].ST_READY;
+		udtMODBUS_Server_Data[Num_01].X8		:=		RU04_RP[iCe_LV].ST_SYNINPROGR;
+		udtMODBUS_Server_Data[Num_01].X9		:=		RU04_RP[iCe_LV].ST_UNSYNINPROGR ;
+		udtMODBUS_Server_Data[Num_01].X10		:=		RU04_RP[iCe_LV].ST_VEXT;
+		udtMODBUS_Server_Data[Num_01].X11		:=		RU04_RP[iCe_LV].ST_BLOCKED;
+
+
+		udtMODBUS_Server_Data[Num_03]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].PWR_ACT);	(* Активная *)
+		udtMODBUS_Server_Data[Num_04]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].PWR_REACT);	(* Реактивная *)
+		udtMODBUS_Server_Data[Num_05]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].PWR_COM);	(* Полная *)
+
+		udtMODBUS_Server_Data[Num_06]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].CURR_A);		(* Ток А *)
+		udtMODBUS_Server_Data[Num_07]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].CURR_B);		(* Ток В *)
+		udtMODBUS_Server_Data[Num_08]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].CURR_C);		(* Ток С *)
+
+		udtMODBUS_Server_Data[Num_09]	 	:= 		INT_TO_WORD(RU04_RP[iCe_LV].PWR_ACT);	(* Косинус *)
+
+		(* udtMODBUS_Server_Data[Num_10] 	:= 		RU04_RP[iCe_LV].PROT;					Срабатывания защит *)
+
+
+		RU04_RP[iCe_LV].COM_ON_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		RU04_RP[iCe_LV].COM_OFF_TCP 		:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+		
+
+
+	END_FOR;
+
+
+	(* напряжения шин
+	   1 - Шина 6кв
+	   2 - Сеть 6кв 1
+	   3 - Сеть 6кв 2
+	   4 - Шина 04кв 1
+	*)
+
+	(* Шина *)
+	FOR iBu	:=	1 TO 7 DO
+
+		Num_01		:=		INT#401+iBu*INT#10;  
+		Num_02		:=		INT#402+iBu*INT#10; 
+		Num_03		:=		INT#403+iBu*INT#10;  
+		Num_04		:=		INT#404+iBu*INT#10; 
+
+		
+		udtMODBUS_Server_Data[Num_01]	 	:= 		INT_TO_WORD(BUS[iBu].VOLT_Uab);   			
+		udtMODBUS_Server_Data[Num_02]	 	:= 		INT_TO_WORD(BUS[iBu].VOLT_Ubc);				
+		udtMODBUS_Server_Data[Num_03]	 	:= 		INT_TO_WORD(BUS[iBu].VOLT_Uca);   			
+		udtMODBUS_Server_Data[Num_04]	 	:= 		INT_TO_WORD(BUS[iBu].FREQ_f);					
+
+
+	END_FOR;
+
+	(* счетчики энергии *)
+(*
+	FOR iCe_MV	:=	1 TO 24 DO
+
+		Num_01		:=		INT#537+iCe_MV*INT#2;  
+		Num_02		:=		INT#538+iCe_MV*INT#2;  
+
+
+		
+		udtMODBUS_Server_Data[Num_01]	 	:= 		RU10_RP[iCe_MV].ENR_KWH.W0;   				(* мл слово 
+		udtMODBUS_Server_Data[Num_02]	 	:= 		RU10_RP[iCe_MV].ENR_KWH.W1;					(* ст словт 
+
+
+	END_FOR;
+ *)
+	(* Выключатели 04 *)
+
+
+
+	(* генераторы ГПУ*)
+ 	FOR iG	:=	1 TO 4 DO (*G4 CHECK! 3/4*)
+
+		Num_01		:=		INT#501+iG*INT#10;  
+		Num_02		:=		INT#502+iG*INT#10;
+		Num_03		:=		INT#503+iG*INT#10;  (*113, 123 ...*)
+		Num_04		:=		INT#504+iG*INT#10;  (*114, 124 ...*)
+		Num_05		:=		INT#505+iG*INT#10;  (*115, 125 ...*)
+		Num_06		:=		INT#506+iG*INT#10;  (*116, 126 ...*)
+		Num_07		:=		INT#507+iG*INT#10;  (*117, 127 ...*)
+		Num_08		:=		INT#508+iG*INT#10;  (*118, 128 ...*)
+		Num_09		:=		INT#509+iG*INT#10;  (*119, 129 ...*)
+		Num_10		:=		INT#510+iG*INT#10;  (*120, 130 ...*)
+
+		udtMODBUS_Server_Data[Num_01].X0	:=		G10[iG].ST_GCB_ON;			(*АГВ Включен*)
+		udtMODBUS_Server_Data[Num_01].X1	:=		G10[iG].ST_GCB_OFF;			(*АГВ отключен*)
+		udtMODBUS_Server_Data[Num_01].X2	:=		NOT G10[iG].ST_ALARM;		(*Авария*)
+		udtMODBUS_Server_Data[Num_01].X3	:=		G10[iG].ST_NOM_SPD;			(*Номинальная скорость*)
+		udtMODBUS_Server_Data[Num_01].X4	:=		G10[iG].ST_READY;			(*Готов в автомате*)
+		udtMODBUS_Server_Data[Num_01].X5	:=		G10[iG].ST_EMERG_STOP;		(*аварийный стоп*)
+		udtMODBUS_Server_Data[Num_01].X6	:=		G10[iG].MODE_HEATING;		(*Прогрев*)
+		udtMODBUS_Server_Data[Num_01].X7	:=		G10[iG].MODE_ISLAND;		(*Режим островной/Параллель*)
+		udtMODBUS_Server_Data[Num_01].X8	:=		G10[iG].MODE_MASTER;		(*Режим островной*)
+		udtMODBUS_Server_Data[Num_01].X9	:=		G10[iG].COM_ON;				(*Команда на старт*)
+		udtMODBUS_Server_Data[Num_01].X10	:=		G10[iG].COM_ISLAND_ENABLE;	(*Остров доступен*)
+		udtMODBUS_Server_Data[Num_01].X11	:=		G10[iG].COM_SYNC;			(*Синхронизация*)
+		udtMODBUS_Server_Data[Num_01].X12	:=		G10[iG].COM_BYPASS;			(*Байпас по теплу*)
+		udtMODBUS_Server_Data[Num_01].X13	:=		G10[iG].COM_EXT_READY;		(*Остановка от АСУ*)
+		udtMODBUS_Server_Data[Num_01].X14	:=		G10[iG].MODE_MANUAL_OPER_COM;		(*Управление мощностью и синхронизация в РУЧНОМ*)
+		udtMODBUS_Server_Data[Num_01].X15	:=		G10[iG].MODE_DISABLE_COM;		(*Блокировка машины*)
+
+		udtMODBUS_Server_Data[Num_03]		:=		INT_TO_WORD(G10[iG].PWR_ACT);			(*Активная мощность*)
+		udtMODBUS_Server_Data[Num_04]		:=		INT_TO_WORD(G10[iG].PWR_REACT);			(*Реактивная мощность*)
+		udtMODBUS_Server_Data[Num_05]		:=		INT_TO_WORD(G10[iG].COS_f);				(*Косинус*)
+		udtMODBUS_Server_Data[Num_06]		:=		INT_TO_WORD(G10[iG].SETP_PWR_ACT);		(*Уставка мощности активной*)
+		udtMODBUS_Server_Data[Num_07]		:=		INT_TO_WORD(G10[iG].SETP_PWR_ACT_P);	(*Уставка мощности процент*)
+		udtMODBUS_Server_Data[Num_08]		:=		INT_TO_WORD(G10[iG].PWR_GROUP);			(*группа генераторов*)
+		udtMODBUS_Server_Data[Num_09]		:=		INT_TO_WORD(G10[iG].VOLT_Uab);			(*Напряжение*)
+		udtMODBUS_Server_Data[Num_10]		:=		INT_TO_WORD(G10[iG].FREQ_f);			(*Частота*)
+
+
+				FOR i := 1 TO 290 DO
+
+					Num_03							:=		INT#900 + iG*INT#300 + i;  
+					udtMODBUS_Server_Data[Num_03]  	:= 		G10[iG].WRD[i];
+				
+				END_FOR;
+		
+		G10[iG].COM_ON_TCP 					:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		G10[iG].COM_OFF_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+		G10[iG].COM_BYP_ON_TCP				:= 		udtMODBUS_Server_Data[Num_02].X2;	
+		G10[iG].COM_BYP_OFF_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X3;	
+		G10[iG].COM_MANUAL_OPER_ON_TCP		:= 		udtMODBUS_Server_Data[Num_02].X4;	
+		G10[iG].COM_MANUAL_OPER_OFF_TCP		:= 		udtMODBUS_Server_Data[Num_02].X5;	
+		G10[iG].COM_DISABLE_ON_TCP			:= 		udtMODBUS_Server_Data[Num_02].X6;	
+		G10[iG].COM_DISABLE_OFF_TCP			:= 		udtMODBUS_Server_Data[Num_02].X7;	
+
+
+	END_FOR;
+
+	(* генераторы ДГУ*)
+ 	FOR iG	:=	1 TO 1 DO
+
+		Num_01		:=		INT#551+iG*INT#10;  
+		Num_02		:=		INT#552+iG*INT#10;
+		Num_03		:=		INT#553+iG*INT#10;  (*113, 123 ...*)
+		Num_04		:=		INT#554+iG*INT#10;  (*114, 124 ...*)
+		Num_05		:=		INT#555+iG*INT#10;  (*115, 125 ...*)
+		Num_06		:=		INT#556+iG*INT#10;  (*116, 126 ...*)
+		Num_07		:=		INT#557+iG*INT#10;  (*117, 127 ...*)
+		Num_08		:=		INT#558+iG*INT#10;  (*118, 128 ...*)
+		Num_09		:=		INT#559+iG*INT#10;  (*119, 129 ...*)
+		Num_10		:=		INT#560+iG*INT#10;  (*120, 130 ...*)
+
+		udtMODBUS_Server_Data[Num_01].X0	:=		G04[iG].ST_GCB_ON;			(*АГВ Включен*)
+		udtMODBUS_Server_Data[Num_01].X1	:=		G04[iG].ST_GCB_OFF;			(*АГВ отключен*)
+		udtMODBUS_Server_Data[Num_01].X2	:=		NOT G04[iG].ST_ALARM;		(*Авария*)
+		udtMODBUS_Server_Data[Num_01].X4	:=		G04[iG].ST_READY;			(*Готов в автомате*)
+		udtMODBUS_Server_Data[Num_01].X5	:=		G04[iG].ST_EMERG_STOP;		(*аварийный стоп*)
+		udtMODBUS_Server_Data[Num_01].X7	:=		G04[iG].MODE_PARALLEL;		(*Параллель*)
+		udtMODBUS_Server_Data[Num_01].X8	:=		G04[iG].MODE_ISLAND;		(*Режим островной*)	
+		udtMODBUS_Server_Data[Num_01].X9	:=		G04[iG].COM_ON;				(*Команда на старт*)
+
+		udtMODBUS_Server_Data[Num_03]		:=		INT_TO_WORD(G04[iG].PWR_ACT);			(*Активная мощность*)
+		udtMODBUS_Server_Data[Num_04]		:=		INT_TO_WORD(G04[iG].PWR_REACT);			(*Реактивная мощность*)
+		udtMODBUS_Server_Data[Num_05]		:=		INT_TO_WORD(G04[iG].COS_f);				(*Косинус*)
+		udtMODBUS_Server_Data[Num_06]		:=		INT_TO_WORD(G04[iG].SETP_PWR_ACT);		(*Уставка мощности активной*)
+		udtMODBUS_Server_Data[Num_07]		:=		INT_TO_WORD(G04[iG].SETP_PWR_ACT_P);	(*Уставка мощности процент*)
+		udtMODBUS_Server_Data[Num_08]		:=		INT_TO_WORD(G04[iG].PWR_ACT_P);			(*группа генераторов*)
+		udtMODBUS_Server_Data[Num_09]		:=		INT_TO_WORD(G04[iG].VOLT_Uab);			(*Напряжение*)
+		udtMODBUS_Server_Data[Num_10]		:=		INT_TO_WORD(G04[iG].FREQ_f);			(*Частота*)
+
+		
+		G04[iG].COM_ON_TCP 					:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		G04[iG].COM_OFF_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+
+	END_FOR;
+
+	(* нагрузка и нагрузочник *)
+	FOR iL	:=	1 TO 120 DO
+
+		Num_01		:=		INT#600+iL; 
+		Num_02		:=		INT#800+iL;
+	
+		udtMODBUS_Server_Data[Num_01].X0	:=		LOAD_RP[iL].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X1	:=		LOAD_RP[iL].ST_OFF;
+
+		LOAD_RP[iL].COM_ON_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		LOAD_RP[iL].COM_OFF_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+
+	END_FOR;
+
+	(* Команды от привы *)
+	FOR iL	:=	1 TO 21 DO
+
+		Num_01		:=		INT#1000 + iL; 
+		Num_02		:=		INT#1030 + iL;
+	
+		udtMODBUS_Server_Data[Num_01].X0	:=		PRIVA[iL].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X1	:=		PRIVA[iL].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X2	:=		PRIVA[iL].ST_NATIVE;
+		udtMODBUS_Server_Data[Num_01].X3	:=		PRIVA[iL].COM_ON;
+		udtMODBUS_Server_Data[Num_01].X4	:=		PRIVA[iL].COM_OFF;
+
+
+		PRIVA[iL].COM_ON_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		PRIVA[iL].COM_OFF_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+		PRIVA[iL].COM_STOP_TCP 				:= 		udtMODBUS_Server_Data[Num_02].X2;		(* Отключить *)
+
+	END_FOR;
+
+		(* Команды от ТП 2-3-4-5 *)
+	FOR iL	:=	1 TO 5 DO
+
+		Num_01		:=		INT#580 + iL; 
+		Num_02		:=		INT#590 + iL;
+	
+		udtMODBUS_Server_Data[Num_01].X0	:=		RU04_TP[iL].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X1	:=		RU04_TP[iL].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X2	:=		RU10_TP[iL].ST_ON;
+		udtMODBUS_Server_Data[Num_01].X3	:=		RU10_TP[iL].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X4	:=		RU10_TP[iL].ST_GND;
+
+
+		RU04_TP[iL].COM_ON_TCP				:=		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		RU04_TP[iL].COM_OFF_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+
+	END_FOR;
+
+	(* температуры и вентиляция ТП 1-2-3-4-5 *)
+	FOR iG	:=	1 TO 6 DO
+
+		Num_01		:=		INT#2501+iG*INT#10;  
+		Num_02		:=		INT#2502+iG*INT#10;
+		Num_03		:=		INT#2503+iG*INT#10;  (*113, 123 ...*)
+		Num_04		:=		INT#2504+iG*INT#10;  (*114, 124 ...*)
+		Num_05		:=		INT#2505+iG*INT#10;  (*115, 125 ...*)
+		Num_06		:=		INT#2506+iG*INT#10;  (*116, 126 ...*)
+		Num_07		:=		INT#2507+iG*INT#10;  (*117, 127 ...*)
+		Num_08		:=		INT#2508+iG*INT#10;  (*118, 128 ...*)
+		Num_09		:=		INT#2509+iG*INT#10;  (*119, 129 ...*)
+		Num_10		:=		INT#2510+iG*INT#10;  (*120, 130 ...*)
+	
+		udtMODBUS_Server_Data[Num_01].X0	:=		TRANS_COND[iG].ST_ON ;
+		udtMODBUS_Server_Data[Num_01].X1	:=		TRANS_COND[iG].ST_OFF;
+		udtMODBUS_Server_Data[Num_01].X2	:=		TRANS_COND[iG].ST_ALARM_T ;
+		udtMODBUS_Server_Data[Num_01].X3	:=		TRANS_COND[iG].ST_FAULT_T ;
+		udtMODBUS_Server_Data[Num_01].X4	:=		TRANS_COND[iG].ST_ALARM_R;
+
+		udtMODBUS_Server_Data[Num_03]		:=		INT_TO_WORD(TRANS_COND[iG].TEMP_L1);			(*Активная мощность*)
+		udtMODBUS_Server_Data[Num_04]		:=		INT_TO_WORD(TRANS_COND[iG].TEMP_L2);			(*Реактивная мощность*)
+		udtMODBUS_Server_Data[Num_05]		:=		INT_TO_WORD(TRANS_COND[iG].TEMP_L3);				(*Косинус*)
+		udtMODBUS_Server_Data[Num_06]		:=		INT_TO_WORD(TRANS_COND[iG].TEMP_TR);		(*Уставка мощности активной*)
+		udtMODBUS_Server_Data[Num_07]		:=		INT_TO_WORD(TRANS_COND[iG].TEMP_04);	(*Уставка мощности процент*)
+
+		TRANS_COND[iG].COM_ON_TCP			:=		udtMODBUS_Server_Data[Num_02].X0;		(* Включить *)
+		TRANS_COND[iG].COM_OFF_TCP 			:= 		udtMODBUS_Server_Data[Num_02].X1;		(* Отключить *)
+
+	END_FOR;
+
+
+		(*Максимальная мощнось ГПУ1 в % 0-1000 ограничение*)
+
+	SEV_VAL_INT_10(VAR_TCP_MB	:= 	udtMODBUS_Server_Data[2611],VAR_TCP	:=	G10[1].PWR_LIMIT);
+	udtMODBUS_Server_Data[2611]	:=	SEV_VAL_INT_10.VAR_TCP_MB;
+	G10[1].PWR_LIMIT			:=	SEV_VAL_INT_10.VAR_TCP;
+
+	SEV_VAL_INT_11(VAR_TCP_MB	:= 	udtMODBUS_Server_Data[2621],VAR_TCP	:=	G10[2].PWR_LIMIT);
+	udtMODBUS_Server_Data[2621]	:=	SEV_VAL_INT_11.VAR_TCP_MB;
+	G10[2].PWR_LIMIT			:=	SEV_VAL_INT_11.VAR_TCP;
+
+	SEV_VAL_INT_12(VAR_TCP_MB	:= 	udtMODBUS_Server_Data[2631],VAR_TCP	:=	G10[3].PWR_LIMIT);
+	udtMODBUS_Server_Data[2631]	:=	SEV_VAL_INT_12.VAR_TCP_MB;
+	G10[3].PWR_LIMIT			:=	SEV_VAL_INT_12.VAR_TCP;
+
+	SEV_VAL_INT_13(VAR_TCP_MB	:= 	udtMODBUS_Server_Data[2641],VAR_TCP	:=	G10[4].PWR_LIMIT);
+	udtMODBUS_Server_Data[2641]	:=	SEV_VAL_INT_13.VAR_TCP_MB;
+	G10[4].PWR_LIMIT			:=	SEV_VAL_INT_13.VAR_TCP;
+
+	(* Битовые значения по досветке. Включение *)
+	udtMODBUS_Server_Data[2651].X0	:=		NOT	(GPU_HEATING_PAR OR GPU_HEATING_ISL);		
+	udtMODBUS_Server_Data[2651].X1	:=			ALLOW_UP_RES;	
+	udtMODBUS_Server_Data[2651].X2	:=		NOT	GEN_OWERPOWER;
+	udtMODBUS_Server_Data[2651].X3	:=			ALLOW_LOAD_FROM_GEN;
+	udtMODBUS_Server_Data[2651].X4	:=		NOT	COM_ALARM;		
+	udtMODBUS_Server_Data[2651].X5	:=		NOT	FREQPROT_START;	
+	udtMODBUS_Server_Data[2651].X6	:=			CERTHON_ENABLE;	
+	udtMODBUS_Server_Data[2651].X7	:=			TMP_RESERVE_UP;
+	udtMODBUS_Server_Data[2651].X8	:=			TMP_NEED_ISLAND;			
+
+	udtMODBUS_Server_Data[2652]		:=	INT_TO_WORD(DINT_TO_INT(TIME_TO_DINT(SETT_T_TOGROWUP	- T_NOW1)/DINT#1000));	 
+
+	(* Битовые значения по досветке. Отключение *)
+	udtMODBUS_Server_Data[2653].X0	:=			ALLOW_DOWN_ISLAND OR ALLOW_DOWN_PARALLEL;		
+	udtMODBUS_Server_Data[2653].X1	:=			ALLOW_DOWN_RES;	
+
+	
+	udtMODBUS_Server_Data[2653].X4	:=		NOT	COM_ALARM;		
+		
+	udtMODBUS_Server_Data[2653].X6	:=			CERTHON_ENABLE;		
+	
+	udtMODBUS_Server_Data[2654]		:=	INT_TO_WORD(DINT_TO_INT(TIME_TO_DINT(SETT_T_TOSTART_AUTO	- T_NOW2)/DINT#1000));	
+
+
+ELSE
+	udtMODBUS_Server_Data[0].X0 := FALSE;
+END_IF;
